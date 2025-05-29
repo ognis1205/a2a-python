@@ -836,8 +836,11 @@ def _join_url(base: str, *paths: str) -> str:
     """
     parsed = urlparse(base)
     clean_paths = [p.strip('/') for p in paths]
-    joined_path = posixpath.join(parsed.path.rstrip('/'), *clean_paths)
-    return urlunparse(parsed._replace(path='/' + joined_path))
+    base_path = parsed.path if parsed.path != '/' else ''
+    base_path = base_path.strip('/')
+    joined_path = posixpath.join(base_path, *clean_paths)
+    final_path = '/' + joined_path if joined_path else '/'
+    return urlunparse(parsed._replace(path=final_path))
 
 
 def _get_path_from_url(url: str) -> str:
@@ -916,13 +919,12 @@ class A2AStarletteBuilder:
         routes = route_builder.build()
         self._mounts.append(Mount(path, routes=routes))
         anchor = _join_url(
-            route_builder.agent_card.url, path, route_builder.rpc_path
+            route_builder.agent_card.url, route_builder.rpc_path
         )
         describedby = [
             AgentLinkTarget(
                 href=_join_url(
                     route_builder.agent_card.url,
-                    path,
                     route_builder.agent_card_path,
                 )
             )
@@ -935,7 +937,6 @@ class A2AStarletteBuilder:
                 AgentLinkTarget(
                     href=_join_url(
                         route_builder.extended_agent_card.url,
-                        path,
                         route_builder.extended_agent_card_path,
                     )
                 )
