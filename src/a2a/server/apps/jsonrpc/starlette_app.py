@@ -1,6 +1,7 @@
 import logging
 import posixpath
 
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
@@ -128,6 +129,21 @@ class A2AStarletteApplication(JSONRPCApplicationAspect):
         return Starlette(**kwargs)
 
 
+@dataclass
+class StarletteRouteConfig:
+    """Configuration for route paths used in the Starlette-based JSON-RPC application.
+
+    Attributes:
+        agent_card_path: The URL path for the agent card endpoint.
+        extended_agent_card_path: The URL path for the authenticated extended agent card endpoint.
+        rpc_path: The URL path for the A2A JSON-RPC endpoint (POST requests).
+    """
+
+    agent_card_path: str = '/agent.json'
+    extended_agent_card_path: str = '/agent/authenticatedExtendedCard'
+    rpc_path: str = '/'
+
+
 class StarletteRouteBuilder(JSONRPCApplicationAspect):
     """Configurable builder for Starlette routes that serve A2A protocol endpoints.
 
@@ -141,10 +157,8 @@ class StarletteRouteBuilder(JSONRPCApplicationAspect):
         agent_card: AgentCard,
         http_handler: RequestHandler,
         extended_agent_card: AgentCard | None = None,
-        agent_card_path: str = '/agent.json',
-        extended_agent_card_path: str = '/agent/authenticatedExtendedCard',
-        rpc_path: str = '/',
         context_builder: CallContextBuilder | None = None,
+        config: StarletteRouteConfig | None = None,
     ):
         """Initializes the A2AStarletteRouter.
 
@@ -154,12 +168,11 @@ class StarletteRouteBuilder(JSONRPCApplicationAspect):
               requests via http.
             extended_agent_card: An optional, distinct AgentCard to be served
               at the authenticated extended card endpoint.
-            agent_card_path: The URL path for the agent card endpoint.
-            rpc_path: The URL path for the A2A JSON-RPC endpoint (POST requests).
-            extended_agent_card_path: The URL path for the authenticated extended agent card endpoint.
             context_builder: The CallContextBuilder used to construct the
               ServerCallContext passed to the http_handler. If None, no
               ServerCallContext is passed.
+            config: Optional route configuration including the paths for the agent card,
+              extended agent card, and A2A JSON-RPC endpoint. If None, defaults are used.
         """
         super().__init__(
             agent_card=agent_card,
@@ -167,9 +180,7 @@ class StarletteRouteBuilder(JSONRPCApplicationAspect):
             extended_agent_card=extended_agent_card,
             context_builder=context_builder,
         )
-        self.agent_card_path = agent_card_path
-        self.extended_agent_card_path = extended_agent_card_path
-        self.rpc_path = rpc_path
+        self.config = config or StarletteRouteConfig()
 
     def build(self) -> list[Route]:
         """Returns the Starlette Routes for handling A2A requests.
@@ -179,13 +190,13 @@ class StarletteRouteBuilder(JSONRPCApplicationAspect):
         """
         routes = [
             Route(
-                self.rpc_path,
+                self.config.rpc_path,
                 self._handle_requests,
                 methods=['POST'],
                 name='a2a_handler',
             ),
             Route(
-                self.agent_card_path,
+                self.config.agent_card_path,
                 self._handle_get_agent_card,
                 methods=['GET'],
                 name='agent_card',
@@ -194,7 +205,7 @@ class StarletteRouteBuilder(JSONRPCApplicationAspect):
         if self.agent_card.supportsAuthenticatedExtendedCard:
             routes.append(
                 Route(
-                    self.extended_agent_card_path,
+                    self.config.extended_agent_card_path,
                     self._handle_get_authenticated_extended_agent_card,
                     methods=['GET'],
                     name='authenticated_extended_agent_card',
@@ -247,7 +258,7 @@ class StarletteBuilder:
     document at the standard path /.well-known/api-catalog.json.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes an empty A2AStarletteBuilder instance.
 
         This sets up the internal structure to hold multiple mounted A2A route groups
@@ -300,12 +311,14 @@ class StarletteBuilder:
             )
         routes = route_builder.build()
         self._mounts.append(Mount(path, routes=routes))
-        anchor = _join_url(route_builder.agent_card.url, route_builder.rpc_path)
+        anchor = _join_url(
+            route_builder.agent_card.url, route_builder.config.rpc_path
+        )
         describedby = [
             AgentLinkTarget(
                 href=_join_url(
                     route_builder.agent_card.url,
-                    route_builder.agent_card_path,
+                    route_builder.config.agent_card_path,
                 )
             )
         ]
@@ -317,7 +330,7 @@ class StarletteBuilder:
                 AgentLinkTarget(
                     href=_join_url(
                         route_builder.extended_agent_card.url,
-                        route_builder.extended_agent_card_path,
+                        route_builder.config.extended_agent_card_path,
                     )
                 )
             )
