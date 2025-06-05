@@ -255,7 +255,7 @@ class StarletteBuilder:
     This class enables mounting multiple A2AStarletteRouteBuilder instances under
     specific paths and generates a complete Starlette application that serves them.
     It also collects AgentLinkContext entries and exposes them as an AgentCatalog
-    document at the standard path /.well-known/api-catalog.json.
+    document at the standard path /.well-known/api-catalog.
     """
 
     def __init__(self) -> None:
@@ -268,7 +268,7 @@ class StarletteBuilder:
             _mounts: A list of Starlette Mount objects representing route groups
               mounted at specific paths.
             _catalog_links: A list of AgentLinkContext instances used to generate
-              the Agent Catalog served at /.well-known/api-catalog.json.
+              the Agent Catalog served at /.well-known/api-catalog.
         """
         self._mounts: list[Mount] = []
         self._catalog_links: list[AgentLinkContext] = []
@@ -345,7 +345,7 @@ class StarletteBuilder:
     def build(self, **kwargs: Any) -> Starlette:
         """Builds and returns a Starlette application."""
         catalog_route = Route(
-            '/.well-known/api-catalog.json',
+            '/.well-known/api-catalog',
             endpoint=self._handle_get_api_catalog,
             methods=['GET'],
             name='api_catalog',

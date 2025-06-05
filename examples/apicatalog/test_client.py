@@ -15,7 +15,7 @@ logging.basicConfig()
 
 
 async def fetch_api_catalog(base_url: str):
-    url = f'{base_url.rstrip("/")}/.well-known/api-catalog.json'
+    url = f'{base_url.rstrip("/")}/.well-known/api-catalog'
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
         response.raise_for_status()
