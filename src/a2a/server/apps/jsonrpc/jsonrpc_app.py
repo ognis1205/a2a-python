@@ -1,13 +1,11 @@
 import contextlib
 import json
 import logging
-import posixpath
 import traceback
 
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
-from typing import Any
-from urllib.parse import urlparse, urlunparse
+from typing import Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI
 from pydantic import ValidationError
@@ -26,9 +24,6 @@ from a2a.types import (
     A2AError,
     A2ARequest,
     AgentCard,
-    AgentCatalog,
-    AgentLinkContext,
-    AgentLinkTarget,
     CancelTaskRequest,
     GetTaskPushNotificationConfigRequest,
     GetTaskRequest,
@@ -97,7 +92,7 @@ class DefaultCallContextBuilder(CallContextBuilder):
         return ServerCallContext(user=user, state=state)
 
 
-class JSONRPCApplication(ABC):
+class JSONRPCApplicationAspect:
     """Base class for A2A JSONRPC applications.
 
     Handles incoming JSON-RPC requests, routes them to the appropriate
@@ -409,7 +404,15 @@ class JSONRPCApplication(ABC):
             status_code=404,
         )
 
-    @abstractmethod
+
+@runtime_checkable
+class JSONRPCApplication(Protocol):
+    """Protocol for building a JSON-RPC application.
+
+    Implementers of this protocol must provide a `build` method that returns a FastAPI
+    or Starlette application instance configured for A2A JSON-RPC communication.
+    """
+
     def build(
         self,
         agent_card_url: str = '/.well-known/agent.json',
@@ -426,6 +429,4 @@ class JSONRPCApplication(ABC):
         Returns:
             A configured JSONRPC application instance.
         """
-        raise NotImplementedError(
-            'Subclasses must implement the build method to create the application instance.'
-        )
+        ...

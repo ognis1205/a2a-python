@@ -1,12 +1,12 @@
 import asyncio
 import json
 import logging
-import os
 import sys
 import traceback
 
 import click
 import httpx
+
 from dotenv import load_dotenv
 
 
@@ -31,7 +31,7 @@ def main(host: str, port: int):
     print(json.dumps(catalog))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         main()
     except Exception as _:

@@ -1,16 +1,15 @@
 import logging
-import os
 import sys
 import traceback
 
 import click
 import uvicorn
-from dotenv import load_dotenv
 
 from agent_executors import (  # type: ignore[import-untyped]
     EchoAgentExecutor,
     HelloWorldAgentExecutor,
 )
+from dotenv import load_dotenv
 
 from a2a.server.apps import A2AStarletteBuilder, A2AStarletteRouteBuilder
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -54,19 +53,19 @@ def main(host: str, port: int):
     )
 
     echo_skill = AgentSkill(
-        id="echo",
-        name="Echo input",
-        description="Returns the input text as is",
-        tags=["echo"],
-        examples=["Hello!", "Repeat after me"],
+        id='echo',
+        name='Echo input',
+        description='Returns the input text as is',
+        tags=['echo'],
+        examples=['Hello!', 'Repeat after me'],
     )
     echo_card = AgentCard(
-        name="Echo Agent",
-        description="An agent that echoes back your input.",
-        url=f"http://{host}:{port}/a2a/echo",
-        version="1.0.0",
-        defaultInputModes=["text"],
-        defaultOutputModes=["text"],
+        name='Echo Agent',
+        description='An agent that echoes back your input.',
+        url=f'http://{host}:{port}/a2a/echo',
+        version='1.0.0',
+        defaultInputModes=['text'],
+        defaultOutputModes=['text'],
         capabilities=AgentCapabilities(streaming=True),
         skills=[echo_skill],
         supportsAuthenticatedExtendedCard=False,
@@ -80,16 +79,11 @@ def main(host: str, port: int):
         http_handler=echo_handler,
     )
 
-    server = (
-        A2AStarletteBuilder()
-            .mount(hello_agent)
-            .mount(echo_agent)
-            .build()
-    )
+    server = A2AStarletteBuilder().mount(hello_agent).mount(echo_agent).build()
     uvicorn.run(server, host=host, port=port)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         main()
     except Exception as _:
