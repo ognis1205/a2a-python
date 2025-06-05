@@ -11,7 +11,7 @@ from agent_executors import (  # type: ignore[import-untyped]
 )
 from dotenv import load_dotenv
 
-from a2a.server.apps import A2AStarletteBuilder, A2AStarletteRouteBuilder
+from a2a.server.apps import StarletteBuilder, StarletteRouteBuilder
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
@@ -47,7 +47,7 @@ def main(host: str, port: int):
         agent_executor=HelloWorldAgentExecutor(),
         task_store=InMemoryTaskStore(),
     )
-    hello_agent = A2AStarletteRouteBuilder(
+    hello_agent = StarletteRouteBuilder(
         agent_card=hello_card,
         http_handler=hello_handler,
     )
@@ -74,12 +74,12 @@ def main(host: str, port: int):
         agent_executor=EchoAgentExecutor(),
         task_store=InMemoryTaskStore(),
     )
-    echo_agent = A2AStarletteRouteBuilder(
+    echo_agent = StarletteRouteBuilder(
         agent_card=echo_card,
         http_handler=echo_handler,
     )
 
-    server = A2AStarletteBuilder().mount(hello_agent).mount(echo_agent).build()
+    server = StarletteBuilder().mount(hello_agent).mount(echo_agent).build()
     uvicorn.run(server, host=host, port=port)
 
 

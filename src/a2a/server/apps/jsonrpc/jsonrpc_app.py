@@ -406,7 +406,7 @@ class JSONRPCApplicationAspect:
 
 
 @runtime_checkable
-class JSONRPCApplication(Protocol):
+class JSONRPCApplicationBuilder(Protocol):
     """Protocol for building a JSON-RPC application.
 
     Implementers of this protocol must provide a `build` method that returns a FastAPI
