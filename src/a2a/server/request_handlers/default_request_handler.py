@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import uuid
 
 from collections.abc import AsyncGenerator
 from typing import cast
@@ -364,6 +365,8 @@ class DefaultRequestHandler(RequestHandler):
         if not task:
             raise ServerError(error=TaskNotFoundError())
 
+        # Generate a unique id for the notification
+        params.pushNotificationConfig.id = str(uuid.uuid4())
         await self._push_notifier.set_info(
             params.taskId,
             params.pushNotificationConfig,
