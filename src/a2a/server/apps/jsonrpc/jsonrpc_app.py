@@ -93,7 +93,7 @@ class DefaultCallContextBuilder(CallContextBuilder):
         return ServerCallContext(user=user, state=state)
 
 
-class JSONRPCApplicationAspect:
+class JSONRPCApplication:
     """Base class for A2A JSONRPC applications.
 
     Handles incoming JSON-RPC requests, routes them to the appropriate

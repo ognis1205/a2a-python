@@ -13,7 +13,7 @@ from typing_extensions import Self
 
 from a2a.server.apps.jsonrpc.jsonrpc_app import (
     CallContextBuilder,
-    JSONRPCApplicationAspect,
+    JSONRPCApplication,
 )
 from a2a.server.request_handlers.jsonrpc_handler import RequestHandler
 from a2a.types import AgentCard, AgentCatalog, AgentLinkContext, AgentLinkTarget
@@ -22,7 +22,7 @@ from a2a.types import AgentCard, AgentCatalog, AgentLinkContext, AgentLinkTarget
 logger = logging.getLogger(__name__)
 
 
-class A2AStarletteApplication(JSONRPCApplicationAspect):
+class A2AStarletteApplication(JSONRPCApplication):
     """A Starlette application implementing the A2A protocol server endpoints.
 
     Handles incoming JSON-RPC requests, routes them to the appropriate
@@ -144,7 +144,7 @@ class StarletteRouteConfig:
     rpc_path: str = '/'
 
 
-class StarletteRouteBuilder(JSONRPCApplicationAspect):
+class StarletteRouteBuilder(JSONRPCApplication):
     """Configurable builder for Starlette routes that serve A2A protocol endpoints.
 
     This builder constructs the necessary HTTP routes for an A2A-compliant agent.
