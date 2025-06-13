@@ -31,6 +31,7 @@ coro
 datamodel
 dunders
 genai
+getkwargs
 gle
 httpapi
 ietf
@@ -40,14 +41,24 @@ langgraph
 lifecycles
 linkset
 linting
+lstrips
+mockurl
 oauthoidc
+<<<<<<< HEAD
 ognis
+=======
+oidc
+>>>>>>> upstream/main
 opensource
 poc
 protoc
 pyi
 pyversions
+resub
 socio
 sse
 tagwords
+taskupdate
+testuuid
+typeerror
 vulnz
