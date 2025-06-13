@@ -37,18 +37,15 @@ httpapi
 ietf
 inmemory
 kwarg
-langgraph
+langgraphga
 lifecycles
 linkset
 linting
 lstrips
 mockurl
 oauthoidc
-<<<<<<< HEAD
 ognis
-=======
 oidc
->>>>>>> upstream/main
 opensource
 poc
 protoc
