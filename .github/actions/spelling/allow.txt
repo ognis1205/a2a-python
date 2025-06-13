@@ -37,7 +37,7 @@ httpapi
 ietf
 inmemory
 kwarg
-langgraphga
+langgraph
 lifecycles
 linkset
 linting
