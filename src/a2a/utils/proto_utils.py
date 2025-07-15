@@ -633,7 +633,6 @@ class FromProto:
         request: a2a_pb2.CreateTaskPushNotificationConfigRequest,
     ) -> types.TaskPushNotificationConfig:
         m = re.match(_TASK_NAME_MATCH, request.parent)
-        print(m)
         if not m:
             raise ServerError(
                 error=types.InvalidParamsError(
