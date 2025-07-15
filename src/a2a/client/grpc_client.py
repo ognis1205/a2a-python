@@ -64,7 +64,7 @@ class A2AGrpcClient:
                 metadata=proto_utils.ToProto.metadata(request.metadata),
             )
         )
-        if response.task:
+        if response.HasField('task'):
             return proto_utils.FromProto.task(response.task)
         return proto_utils.FromProto.message(response.msg)
 
@@ -87,7 +87,7 @@ class A2AGrpcClient:
             `TaskArtifactUpdateEvent` objects as they are received in the
             stream.
         """
-        stream = self.stub.SendStreamingMessage(
+        stream = await self.stub.SendStreamingMessage(
             a2a_pb2.SendMessageRequest(
                 request=proto_utils.ToProto.message(request.message),
                 configuration=proto_utils.ToProto.message_send_configuration(
