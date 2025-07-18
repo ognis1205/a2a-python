@@ -35,7 +35,7 @@ def mock_grpc_stub() -> AsyncMock:
     """Provides a mock gRPC stub with methods mocked."""
     stub = AsyncMock(spec=a2a_pb2_grpc.A2AServiceStub)
     stub.SendMessage = AsyncMock()
-    stub.SendStreamingMessage = AsyncMock()
+    stub.SendStreamingMessage = MagicMock()
     stub.GetTask = AsyncMock()
     stub.CancelTask = AsyncMock()
     stub.CreateTaskPushNotificationConfig = AsyncMock()
@@ -248,7 +248,7 @@ async def test_send_message_streaming(
         )
     ]
 
-    mock_grpc_stub.SendStreamingMessage.assert_awaited_once()
+    mock_grpc_stub.SendStreamingMessage.assert_called_once()
     assert isinstance(responses[0], Message)
     assert responses[0].messageId == sample_message.messageId
     assert isinstance(responses[1], Task)

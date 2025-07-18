@@ -87,7 +87,7 @@ class A2AGrpcClient:
             `TaskArtifactUpdateEvent` objects as they are received in the
             stream.
         """
-        stream = await self.stub.SendStreamingMessage(
+        stream = self.stub.SendStreamingMessage(
             a2a_pb2.SendMessageRequest(
                 request=proto_utils.ToProto.message(request.message),
                 configuration=proto_utils.ToProto.message_send_configuration(
