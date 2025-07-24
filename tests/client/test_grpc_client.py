@@ -51,9 +51,9 @@ def sample_agent_card() -> AgentCard:
         description='Agent for testing gRPC client',
         url='grpc://localhost:50051',
         version='1.0',
-        capabilities=AgentCapabilities(streaming=True, pushNotifications=True),
-        defaultInputModes=['text/plain'],
-        defaultOutputModes=['text/plain'],
+        capabilities=AgentCapabilities(streaming=True, push_notifications=True),
+        default_input_modes=['text/plain'],
+        default_output_modes=['text/plain'],
         skills=[],
     )
 
@@ -72,7 +72,7 @@ def sample_message_send_params() -> MessageSendParams:
     return MessageSendParams(
         message=Message(
             role=Role.user,
-            messageId='msg-1',
+            message_id='msg-1',
             parts=[Part(root=TextPart(text='Hello'))],
         )
     )
@@ -83,7 +83,7 @@ def sample_task() -> Task:
     """Provides a sample Task object."""
     return Task(
         id='task-1',
-        contextId='ctx-1',
+        context_id='ctx-1',
         status=TaskStatus(state=TaskState.completed),
     )
 
@@ -93,7 +93,7 @@ def sample_message() -> Message:
     """Provides a sample Message object."""
     return Message(
         role=Role.agent,
-        messageId='msg-response',
+        message_id='msg-response',
         parts=[Part(root=TextPart(text='Hi there'))],
     )
 
