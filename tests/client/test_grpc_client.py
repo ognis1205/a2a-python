@@ -9,6 +9,7 @@ from a2a.types import (
     AgentCapabilities,
     AgentCard,
     Artifact,
+    GetTaskPushNotificationConfigParams,
     Message,
     MessageSendParams,
     Part,
@@ -29,7 +30,6 @@ from a2a.utils import proto_utils
 from a2a.utils.errors import ServerError
 
 
-# Fixtures
 @pytest.fixture
 def mock_grpc_stub() -> AsyncMock:
     """Provides a mock gRPC stub with methods mocked."""
@@ -105,7 +105,7 @@ def sample_message() -> Message:
 def sample_artifact() -> Artifact:
     """Provides a sample Artifact object."""
     return Artifact(
-        artifactId='artifact-1',
+        artifact_id='artifact-1',
         name='example.txt',
         description='An example artifact',
         parts=[Part(root=TextPart(text='Hi there'))],
@@ -118,8 +118,8 @@ def sample_artifact() -> Artifact:
 def sample_task_status_update_event() -> TaskStatusUpdateEvent:
     """Provides a sample TaskStatusUpdateEvent."""
     return TaskStatusUpdateEvent(
-        taskId='task-1',
-        contextId='ctx-1',
+        task_id='task-1',
+        context_id='ctx-1',
         status=TaskStatus(state=TaskState.working),
         final=False,
         metadata={},
@@ -132,8 +132,8 @@ def sample_task_artifact_update_event(
 ) -> TaskArtifactUpdateEvent:
     """Provides a sample TaskArtifactUpdateEvent."""
     return TaskArtifactUpdateEvent(
-        taskId='task-1',
-        contextId='ctx-1',
+        task_id='task-1',
+        context_id='ctx-1',
         artifact=sample_artifact,
         append=True,
         last_chunk=True,
@@ -168,8 +168,8 @@ def sample_task_push_notification_config(
 ) -> TaskPushNotificationConfig:
     """Provides a sample TaskPushNotificationConfig object."""
     return TaskPushNotificationConfig(
-        taskId='task-1',
-        pushNotificationConfig=sample_push_notification_config,
+        task_id='task-1',
+        push_notification_config=sample_push_notification_config,
     )
 
 
@@ -194,7 +194,7 @@ async def test_send_message_task_response(
 
 @pytest.mark.asyncio
 async def test_send_message_message_response(
-    grpc_client: A2AGrpcClient,
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_message_send_params: MessageSendParams,
     sample_message: Message,
@@ -204,16 +204,16 @@ async def test_send_message_message_response(
         msg=proto_utils.ToProto.message(sample_message)
     )
 
-    response = await grpc_client.send_message(sample_message_send_params)
+    response = await grpc_transport.send_message(sample_message_send_params)
 
     mock_grpc_stub.SendMessage.assert_awaited_once()
     assert isinstance(response, Message)
-    assert response.messageId == sample_message.messageId
+    assert response.message_id == sample_message.message_id
 
 
 @pytest.mark.asyncio
-async def test_send_message_streaming(
-    grpc_client: A2AGrpcClient,
+async def test_send_message_streaming(  # noqa: PLR0913
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_message_send_params: MessageSendParams,
     sample_message: Message,
@@ -246,20 +246,20 @@ async def test_send_message_streaming(
 
     responses = [
         response
-        async for response in grpc_client.send_message_streaming(
+        async for response in grpc_transport.send_message_streaming(
             sample_message_send_params
         )
     ]
 
     mock_grpc_stub.SendStreamingMessage.assert_called_once()
     assert isinstance(responses[0], Message)
-    assert responses[0].messageId == sample_message.messageId
+    assert responses[0].message_id == sample_message.message_id
     assert isinstance(responses[1], Task)
     assert responses[1].id == sample_task.id
     assert isinstance(responses[2], TaskStatusUpdateEvent)
-    assert responses[2].taskId == sample_task_status_update_event.taskId
+    assert responses[2].task_id == sample_task_status_update_event.task_id
     assert isinstance(responses[3], TaskArtifactUpdateEvent)
-    assert responses[3].taskId == sample_task_artifact_update_event.taskId
+    assert responses[3].task_id == sample_task_artifact_update_event.task_id
 
 
 @pytest.mark.asyncio
@@ -300,113 +300,118 @@ async def test_cancel_task(
 
 @pytest.mark.asyncio
 async def test_set_task_callback_with_valid_task(
-    grpc_client: A2AGrpcClient,
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_task_push_notification_config: TaskPushNotificationConfig,
 ):
     """Test setting a task push notification config with a valid task id."""
-    task_id = 'task-1'
-    config_id = 'config-1'
     mock_grpc_stub.CreateTaskPushNotificationConfig.return_value = (
-        a2a_pb2.CreateTaskPushNotificationConfigRequest(
-            parent=f'tasks/{task_id}',
-            config_id=config_id,
-            config=proto_utils.ToProto.task_push_notification_config(
-                sample_task_push_notification_config
-            ),
+        proto_utils.ToProto.task_push_notification_config(
+            sample_task_push_notification_config
         )
     )
 
-    response = await grpc_client.set_task_callback(
+    response = await grpc_transport.set_task_callback(
         sample_task_push_notification_config
     )
 
     mock_grpc_stub.CreateTaskPushNotificationConfig.assert_awaited_once_with(
         a2a_pb2.CreateTaskPushNotificationConfigRequest(
+            parent=f'tasks/{sample_task_push_notification_config.task_id}',
+            config_id=sample_task_push_notification_config.push_notification_config.id,
             config=proto_utils.ToProto.task_push_notification_config(
                 sample_task_push_notification_config
             ),
         )
     )
-    assert response.taskId == task_id
+    assert response.task_id == sample_task_push_notification_config.task_id
 
 
 @pytest.mark.asyncio
 async def test_set_task_callback_with_invalid_task(
-    grpc_client: A2AGrpcClient,
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_task_push_notification_config: TaskPushNotificationConfig,
 ):
     """Test setting a task push notification config with a invalid task id."""
-    task_id = 'task-1'
-    config_id = 'config-1'
-    mock_grpc_stub.CreateTaskPushNotificationConfig.return_value = (
-        a2a_pb2.CreateTaskPushNotificationConfigRequest(
-            parent=f'invalid-path-to-tasks/{task_id}',
-            config_id=config_id,
-            config=proto_utils.ToProto.task_push_notification_config(
-                sample_task_push_notification_config
-            ),
-        )
+    mock_grpc_stub.CreateTaskPushNotificationConfig.return_value = a2a_pb2.TaskPushNotificationConfig(
+        name=(
+            f'invalid-path-to-tasks/{sample_task_push_notification_config.task_id}/'
+            f'pushNotificationConfigs/{sample_task_push_notification_config.push_notification_config.id}'
+        ),
+        push_notification_config=a2a_pb2.PushNotificationConfig(
+            id=sample_task_push_notification_config.push_notification_config.id,
+            url=sample_task_push_notification_config.push_notification_config.url,
+            token=sample_task_push_notification_config.push_notification_config.token,
+        ),
     )
 
     with pytest.raises(ServerError) as exc_info:
-        await grpc_client.set_task_callback(
+        await grpc_transport.set_task_callback(
             sample_task_push_notification_config
         )
-    assert 'No task for' in exc_info.value.error.message
+    assert (
+        'Bad TaskPushNotificationConfig resource name'
+        in exc_info.value.error.message
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_task_callback_with_valid_task(
-    grpc_client: A2AGrpcClient,
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_task_push_notification_config: TaskPushNotificationConfig,
 ):
     """Test retrieving a task push notification config with a valid task id."""
-    task_id = 'task-1'
-    config_id = 'config-1'
     mock_grpc_stub.GetTaskPushNotificationConfig.return_value = (
-        a2a_pb2.CreateTaskPushNotificationConfigRequest(
-            parent=f'tasks/{task_id}',
-            config_id=config_id,
-            config=proto_utils.ToProto.task_push_notification_config(
-                sample_task_push_notification_config
-            ),
+        proto_utils.ToProto.task_push_notification_config(
+            sample_task_push_notification_config
         )
     )
-    params = TaskIdParams(id=sample_task_push_notification_config.taskId)
+    params = GetTaskPushNotificationConfigParams(
+        id=sample_task_push_notification_config.task_id,
+        push_notification_config_id=sample_task_push_notification_config.push_notification_config.id,
+    )
 
-    response = await grpc_client.get_task_callback(params)
+    response = await grpc_transport.get_task_callback(params)
 
     mock_grpc_stub.GetTaskPushNotificationConfig.assert_awaited_once_with(
         a2a_pb2.GetTaskPushNotificationConfigRequest(
-            name=f'tasks/{params.id}/pushNotification/undefined',
+            name=(
+                f'tasks/{params.id}/'
+                f'pushNotificationConfigs/{params.push_notification_config_id}'
+            ),
         )
     )
-    assert response.taskId == task_id
+    assert response.task_id == sample_task_push_notification_config.task_id
 
 
 @pytest.mark.asyncio
 async def test_get_task_callback_with_invalid_task(
-    grpc_client: A2AGrpcClient,
+    grpc_transport: GrpcTransport,
     mock_grpc_stub: AsyncMock,
     sample_task_push_notification_config: TaskPushNotificationConfig,
 ):
     """Test retrieving a task push notification config with a invalid task id."""
-    task_id = 'task-1'
-    config_id = 'config-1'
-    mock_grpc_stub.GetTaskPushNotificationConfig.return_value = (
-        a2a_pb2.CreateTaskPushNotificationConfigRequest(
-            parent=f'invalid-path-to-tasks/{task_id}',
-            config_id=config_id,
-            config=proto_utils.ToProto.task_push_notification_config(
-                sample_task_push_notification_config
-            ),
-        )
+    mock_grpc_stub.GetTaskPushNotificationConfig.return_value = a2a_pb2.TaskPushNotificationConfig(
+        name=(
+            f'invalid-path-to-tasks/{sample_task_push_notification_config.task_id}/'
+            f'pushNotificationConfigs/{sample_task_push_notification_config.push_notification_config.id}'
+        ),
+        push_notification_config=a2a_pb2.PushNotificationConfig(
+            id=sample_task_push_notification_config.push_notification_config.id,
+            url=sample_task_push_notification_config.push_notification_config.url,
+            token=sample_task_push_notification_config.push_notification_config.token,
+        ),
     )
-    params = TaskIdParams(id=sample_task_push_notification_config.taskId)
+    params = GetTaskPushNotificationConfigParams(
+        id=sample_task_push_notification_config.task_id,
+        push_notification_config_id=sample_task_push_notification_config.push_notification_config.id,
+    )
 
     with pytest.raises(ServerError) as exc_info:
-        await grpc_client.get_task_callback(params)
-    assert 'No task for' in exc_info.value.error.message
+        await grpc_transport.get_task_callback(params)
+    assert (
+        'Bad TaskPushNotificationConfig resource name'
+        in exc_info.value.error.message
+    )
