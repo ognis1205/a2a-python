@@ -26,7 +26,7 @@ from a2a.types import (
     TaskStatusUpdateEvent,
     TextPart,
 )
-from a2a.utils import proto_utils
+from a2a.utils import get_text_parts, proto_utils
 from a2a.utils.errors import ServerError
 
 
@@ -209,6 +209,9 @@ async def test_send_message_message_response(
     mock_grpc_stub.SendMessage.assert_awaited_once()
     assert isinstance(response, Message)
     assert response.message_id == sample_message.message_id
+    assert get_text_parts(response.parts) == get_text_parts(
+        sample_message.parts
+    )
 
 
 @pytest.mark.asyncio
